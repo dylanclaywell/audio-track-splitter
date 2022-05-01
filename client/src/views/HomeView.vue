@@ -18,6 +18,10 @@ const formFields = ref<FormFields>({
   ],
 })
 
+function onSourceFileChange(e) {
+  console.log(e.target.value)
+}
+
 function onTrackChange(trackId: string, fieldName: string, event) {
   const track = formFields.value.tracks.find((t) => t.id === trackId)
 
@@ -43,9 +47,12 @@ function removeTrack(id: string) {
       <h1 class="title">Audio Track Splitter</h1>
       <section class="section">
         <h2 class="heading">Files</h2>
+        <p class="subheading">
+          Make sure the file to select a file from within the sources directory
+          of the server.
+        </p>
         <div class="song-fields">
-          <TextField label="Source" />
-          <TextField label="Target" />
+          <TextField @change="onSourceFileChange" type="file" label="Source" />
         </div>
       </section>
       <div class="divider" />
@@ -100,6 +107,10 @@ function removeTrack(id: string) {
 }
 
 .heading {
+  margin-bottom: 1rem;
+}
+
+.subheading {
   margin-bottom: 1rem;
 }
 

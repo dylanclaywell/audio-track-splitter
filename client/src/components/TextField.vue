@@ -3,6 +3,7 @@ interface Props {
   onChange: () => void
   value: string
   label: string
+  type?: 'file'
 }
 
 const props = defineProps<Props>()
@@ -10,6 +11,7 @@ const props = defineProps<Props>()
 
 <template>
   <input
+    :type="props.type"
     :placeholder="props.label"
     class="input"
     :value="props.value"
