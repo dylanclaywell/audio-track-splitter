@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
   onChange: () => void
-  value: string
+  value?: string
   label: string
   type?: 'file'
 }
