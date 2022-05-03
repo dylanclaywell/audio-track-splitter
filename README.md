@@ -35,7 +35,7 @@ The server starts at `http://localhost:4000`.
 
 The server exposes the POST endpoint `/splitIntoTracks` and expects the following arguments in JSON format:
 
-```json
+```jsonc
 {
   // The sourceFile should be put in server/sources
   "sourceFile": "source.flac",
