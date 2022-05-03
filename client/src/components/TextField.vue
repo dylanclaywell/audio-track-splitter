@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Props {
-  onChange: () => void
+  onChange: (event: Event) => void
   value?: string
   label: string
   type?: 'file'

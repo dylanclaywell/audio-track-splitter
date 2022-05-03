@@ -10,7 +10,7 @@ import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import type { Track } from '@/interfaces/track.interface'
 import type { Metadata } from '@/interfaces/metadata.interface'
 
-export interface FormFields {
+interface FormFields {
   sourceFile: string | undefined
   fileFormat: string | undefined
   metadata?: Metadata
@@ -23,15 +23,19 @@ interface Dialog {
   type: 'success' | 'error'
 }
 
-const storedFormFields = JSON.parse(localStorage.getItem('formFields')) ?? {
-  sourceFile: undefined,
-  fileFormat: undefined,
-  tracks: [
-    {
-      id: generateUuid(),
-    },
-  ],
-}
+const localStorageFormFields = localStorage.getItem('formFields')
+
+const storedFormFields = localStorageFormFields
+  ? JSON.parse(localStorageFormFields)
+  : {
+      sourceFile: undefined,
+      fileFormat: undefined,
+      tracks: [
+        {
+          id: generateUuid(),
+        },
+      ],
+    }
 
 const dialog = ref<Dialog | undefined>()
 
@@ -39,66 +43,78 @@ const formFields = ref<FormFields>(storedFormFields)
 
 const isLoading = ref(false)
 
-const canSubmit = ref(false)
+const canSubmit = ref(formFieldsAreValid(formFields.value))
 
 watch(
   formFields,
   (newFormFields) => {
     localStorage.setItem('formFields', JSON.stringify(formFields.value))
 
-    let fieldsAreValid = true
-
-    for (const track of newFormFields.tracks) {
-      if (!track.name || !track.startTime || !track.endTime) {
-        fieldsAreValid = false
-        break
-      }
-
-      if (
-        !/^\d{2}:\d{2}:\d{2}$/.test(track.startTime) ||
-        !/^\d{2}:\d{2}:\d{2}$/.test(track.endTime)
-      ) {
-        fieldsAreValid = false
-        break
-      }
-    }
-
-    if (!newFormFields.sourceFile) {
-      fieldsAreValid = false
-    }
-
-    if (!newFormFields.fileFormat) {
-      fieldsAreValid = false
-    }
-
-    canSubmit.value = fieldsAreValid
+    canSubmit.value = formFieldsAreValid(newFormFields)
   },
   { deep: true }
 )
 
-function onFormFieldChange(fieldName: string, e) {
-  formFields.value[fieldName] = e.target.value
+function formFieldsAreValid(formFields: FormFields) {
+  let fieldsAreValid = true
+
+  for (const track of formFields.tracks) {
+    if (!track.name || !track.startTime || !track.endTime) {
+      fieldsAreValid = false
+      break
+    }
+
+    if (
+      !/^\d{2}:\d{2}:\d{2}$/.test(track.startTime) ||
+      !/^\d{2}:\d{2}:\d{2}$/.test(track.endTime)
+    ) {
+      fieldsAreValid = false
+      break
+    }
+  }
+
+  if (!formFields.sourceFile) {
+    fieldsAreValid = false
+  }
+
+  if (!formFields.fileFormat) {
+    fieldsAreValid = false
+  }
+
+  return fieldsAreValid
 }
 
-function onTrackChange(trackId: string, fieldName: string, event) {
+function onStringFormFieldChange(
+  fieldName: 'sourceFile' | 'fileFormat',
+  e: Event
+) {
+  formFields.value[fieldName] = (e.target as HTMLInputElement)?.value
+}
+
+function onTrackChange(trackId: string, fieldName: keyof Track, event: Event) {
   const track = formFields.value.tracks.find((t) => t.id === trackId)
 
   if (!track) return
 
-  track[fieldName] = event.target.value
+  track[fieldName] = (event.target as HTMLInputElement)?.value
 }
 
-function onMetadataChange(fieldName: keyof Metadata, event) {
+function onMetadataChange(fieldName: keyof Metadata, event: Event) {
   if (!formFields.value.metadata) {
     formFields.value.metadata = {}
   }
 
   const metadata = formFields.value.metadata
-  metadata[fieldName] = event.target.value
+  metadata[fieldName] = (event.target as HTMLInputElement)?.value
 }
 
 function addTrack() {
-  formFields.value.tracks.push({ id: generateUuid() })
+  formFields.value.tracks.push({
+    id: generateUuid(),
+    endTime: undefined,
+    name: undefined,
+    startTime: undefined,
+  })
 }
 
 function removeTrack(id: string) {
@@ -120,12 +136,14 @@ function createTracks() {
 
     if (response.status === 201) {
       dialog.value = {
+        type: 'success',
         message:
           'Created all tracks successfully. Check the output directory of the server for your files.',
         title: 'Success',
       }
     } else {
       dialog.value = {
+        type: 'error',
         message:
           'There was an error creating the tracks. Please double check your inputs.',
         title: 'Error',
@@ -155,12 +173,12 @@ function closeDialog() {
       >
         <div class="song-fields">
           <TextField
-            @change="(event) => onFormFieldChange('sourceFile', event)"
+            :onChange="(event) => onStringFormFieldChange('sourceFile', event)"
             :value="formFields.sourceFile"
             label="Source File"
           />
           <TextField
-            @change="(event) => onFormFieldChange('fileFormat', event)"
+            :onChange="(event) => onStringFormFieldChange('fileFormat', event)"
             :value="formFields.fileFormat"
             label="File Format"
           />
@@ -175,46 +193,46 @@ function closeDialog() {
       >
         <div class="song-fields">
           <TextField
-            @change="(event) => onMetadataChange('artist', event)"
+            :onChange="(event) => onMetadataChange('artist', event)"
             :value="formFields.metadata?.artist"
             label="Artist"
           />
           <TextField
-            @change="(event) => onMetadataChange('album', event)"
+            :onChange="(event) => onMetadataChange('album', event)"
             :value="formFields.metadata?.album"
             label="Album"
           /><TextField
-            @change="(event) => onMetadataChange('album_artist', event)"
+            :onChange="(event) => onMetadataChange('album_artist', event)"
             :value="formFields.metadata?.album_artist"
             label="Album Artist"
           />
           <TextField
-            @change="(event) => onMetadataChange('year', event)"
+            :onChange="(event) => onMetadataChange('year', event)"
             :value="formFields.metadata?.year"
             label="Year"
           />
           <TextField
-            @change="(event) => onMetadataChange('genre', event)"
+            :onChange="(event) => onMetadataChange('genre', event)"
             :value="formFields.metadata?.genre"
             label="Genre"
           />
           <TextField
-            @change="(event) => onMetadataChange('comment', event)"
+            :onChange="(event) => onMetadataChange('comment', event)"
             :value="formFields.metadata?.comment"
             label="Comment"
           />
           <TextField
-            @change="(event) => onMetadataChange('composer', event)"
+            :onChange="(event) => onMetadataChange('composer', event)"
             :value="formFields.metadata?.composer"
             label="Composer"
           />
           <TextField
-            @change="(event) => onMetadataChange('original_artist', event)"
+            :onChange="(event) => onMetadataChange('original_artist', event)"
             :value="formFields.metadata?.original_artist"
             label="Original Artist"
           />
           <TextField
-            @change="(event) => onMetadataChange('copyrigh', event)"
+            :onChange="(event) => onMetadataChange('copyright', event)"
             :value="formFields.metadata?.copyright"
             label="Copyright"
           />
@@ -262,7 +280,6 @@ function closeDialog() {
 
 <style scoped>
 .home {
-  min-width: 100vw;
   min-height: 100vh;
   display: flex;
   justify-content: center;

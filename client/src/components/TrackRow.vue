@@ -5,7 +5,7 @@ import type { Track } from '@/interfaces/track.interface'
 
 interface Props {
   track: Track
-  onTrackChange: (id: string, fieldName: string, event) => void
+  onTrackChange: (id: string, fieldName: keyof Track, event: Event) => void
   onRemoveTrack: (id: string) => void
   canRemoveTrack: boolean
 }
